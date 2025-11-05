@@ -1,4 +1,4 @@
-module git.sr.ht/~vhespanha/tour_clara
+module github.com/vhespanha/tour_clara
 
 go 1.25.1
 
