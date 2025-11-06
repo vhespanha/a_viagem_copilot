@@ -4,8 +4,8 @@ import (
 	"image/color"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/vector"
 	"github.com/hajimehoshi/ebiten/v2/inpututil"
+	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
 var (
@@ -41,7 +41,7 @@ func newGame() *Game {
 		size: 100,
 		x:    int(rx),
 		y:    int(ry),
-		col:  Red,
+		col:  Green,
 	}
 	return &Game{rectangle}
 }
