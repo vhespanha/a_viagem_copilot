@@ -6,8 +6,8 @@ type Anchor struct {
 }
 
 func (a Anchor) Position(objW, objH float32) (float32, float32) {
-	x := (ScreenWidth-objW)*a.AnchorX + a.OffsetX
-	y := (ScreenHeight-objH)*a.AnchorY + a.OffsetY
+	x := (SCREEN_WIDTH-objW)*a.AnchorX + a.OffsetX
+	y := (SCREEN_HEIGHT-objH)*a.AnchorY + a.OffsetY
 	return x, y
 }
 
