@@ -10,6 +10,11 @@ const (
 
 type ID string
 
+const (
+	nodeIDFirst  ID = "first"
+	nodeIDSecond ID = "second" // temporary until we serialize game data
+)
+
 type DialogueNode struct {
 	Speaker          string
 	Text             string
@@ -56,18 +61,23 @@ func NewDialogueSystem() *DialogueSystem {
 }
 
 func (ds *DialogueSystem) Choose(choice int) error {
-	if choice == 1 {
-		currentNode := ds.Content[ds.Current]
+	currentNode := ds.Content[ds.Current]
+
+	switch choice {
+	case 1:
 		if currentNode.Choice1 == nil {
-			ds.Current = "first" // for now we loop around
+			ds.Current = nodeIDFirst // for now we loop around
 			return nil
 		}
 		ds.Current = currentNode.Choice1.NextID
 		return nil
-	} else if choice == 2 {
-		currentNode := ds.Content[ds.Current]
+	case 2:
+		if currentNode.Choice2 == nil {
+			return fmt.Errorf("choice 2 is not available")
+		}
 		ds.Current = currentNode.Choice2.NextID
 		return nil
+	default:
+		return fmt.Errorf("must be 1 or 2")
 	}
-	return fmt.Errorf("must be 1 or 2")
 }
