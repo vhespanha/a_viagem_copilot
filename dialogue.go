@@ -33,7 +33,7 @@ type DialogueSystem struct {
 }
 
 func NewDialogueSystem() *DialogueSystem {
-	rx, ry := BottomCenter.Offset(0, -20).Position(float32(dialogueBoxWidth), float32(dialogueBoxHeight))
+	rx, ry := BottomCenter.Offset(0, dialogueBoxOffsetY).Position(float32(dialogueBoxWidth), float32(dialogueBoxHeight))
 	return &DialogueSystem{
 		Content: map[ID]*DialogueNode{"first": &DialogueNode{
 			Speaker: "Vinicius",

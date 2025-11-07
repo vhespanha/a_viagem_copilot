@@ -17,6 +17,12 @@ const (
 	screenHeight = 1080
 )
 
+const (
+	fontSizeNormal = 24
+	fontSizeBig    = 32
+	lineSpacing    = 1.5
+)
+
 type Rectangle struct {
 	w, h, x, y int
 	col        color.RGBA
@@ -45,11 +51,11 @@ func newFonts() *Fonts {
 
 	faceNormal = &text.GoTextFace{
 		Source: faceSource,
-		Size:   24,
+		Size:   fontSizeNormal,
 	}
 	faceBig = &text.GoTextFace{
 		Source: faceSource,
-		Size:   32,
+		Size:   fontSizeBig,
 	}
 
 	return &Fonts{
@@ -67,7 +73,8 @@ func (g *Game) Update() error {
 	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
 		cx, cy := ebiten.CursorPosition()
 		if g.dialogueSystem.Box.IsOnTop(cx, cy) {
-			err := g.dialogueSystem.Choose(1)
+			const firstChoiceOption = 1
+			err := g.dialogueSystem.Choose(firstChoiceOption)
 			if err != nil {
 				return err
 			}
@@ -83,7 +90,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	op := &text.DrawOptions{}
 	op.GeoM.Translate(float64(g.dialogueSystem.Box.x), float64(g.dialogueSystem.Box.y))
-	op.LineSpacing = g.fonts.normal.Size * 1.5
+	op.LineSpacing = g.fonts.normal.Size * lineSpacing
 
 	currentNode := g.dialogueSystem.Content[g.dialogueSystem.Current]
 	dialogue := currentNode.Text
