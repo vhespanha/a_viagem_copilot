@@ -2,10 +2,11 @@ package main
 
 import "image/color"
 
+// Common color constants for use throughout the application.
 var (
-	RED   = color.RGBA{0xff, 0, 0, 0xff}
-	GREEN = color.RGBA{0, 0xff, 0, 0xff}
-	BLUE  = color.RGBA{0, 0, 0xff, 0xff}
-	WHITE = color.RGBA{0xff, 0xff, 0xff, 0xff}
-	BLACK = color.RGBA{0, 0, 0, 0xff}
+	Red   = color.RGBA{0xff, 0, 0, 0xff}
+	Green = color.RGBA{0, 0xff, 0, 0xff}
+	Blue  = color.RGBA{0, 0, 0xff, 0xff}
+	White = color.RGBA{0xff, 0xff, 0xff, 0xff}
+	Black = color.RGBA{0, 0, 0, 0xff}
 )

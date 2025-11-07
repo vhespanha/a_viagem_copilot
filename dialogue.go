@@ -1,6 +1,9 @@
 package main
 
-import "fmt"
+import (
+	"fmt"
+	"image/color"
+)
 
 const (
 	dialogueBoxWidth   = screenWidth
@@ -8,36 +11,44 @@ const (
 	dialogueBoxOffsetY = -20
 )
 
-type ID string
-
+// Dialogue node IDs
 const (
 	nodeIDFirst  ID = "first"
-	nodeIDSecond ID = "second" // temporary until we serialize game data
+	nodeIDSecond ID = "second"
 )
 
+// ID is a unique identifier for dialogue nodes.
+type ID string
+
+// DialogueNode represents a single node in the dialogue tree.
 type DialogueNode struct {
 	Speaker          string
 	Text             string
 	Choice1, Choice2 *Choice
 }
 
+// Choice represents a player's dialogue choice leading to another node.
 type Choice struct {
 	Text   string
 	NextID ID
 }
 
+// DialogueSystem manages the dialogue state and progression.
 type DialogueSystem struct {
-	Content map[ID]*DialogueNode
-	Current ID
-	Box     *Rectangle
+	Content  map[ID]*DialogueNode
+	Current  ID
+	Box      *Rect
+	BoxColor color.RGBA
 }
 
+// NewDialogueSystem creates and initializes a new dialogue system.
 func NewDialogueSystem() *DialogueSystem {
-	rx, ry := BottomCenter.Offset(0, dialogueBoxOffsetY).Position(float32(dialogueBoxWidth), float32(dialogueBoxHeight))
+	rect := PositionRect(BottomCenter.Offset(0, dialogueBoxOffsetY),
+		dialogueBoxWidth, dialogueBoxHeight)
 	return &DialogueSystem{
 		Content: map[ID]*DialogueNode{nodeIDFirst: &DialogueNode{
 			Speaker: "Vinicius",
-			Text:    "Feliz aniversario!",
+			Text:    "Feliz aniversário!",
 			Choice1: &Choice{
 				Text:   "",
 				NextID: nodeIDSecond,
@@ -45,21 +56,18 @@ func NewDialogueSystem() *DialogueSystem {
 			Choice2: nil,
 		}, nodeIDSecond: &DialogueNode{
 			Speaker: "Clara",
-			Text:    "Voce lembrou!",
+			Text:    "Você lembrou!",
 			Choice1: nil,
 			Choice2: nil,
 		}},
-		Current: nodeIDFirst,
-		Box: &Rectangle{ // dialogue box
-			width:  dialogueBoxWidth,
-			height: dialogueBoxHeight,
-			x:      int(rx),
-			y:      int(ry),
-			color:  BLACK,
-		},
+		Current:  nodeIDFirst,
+		Box:      &rect,
+		BoxColor: Black,
 	}
 }
 
+// Choose processes a dialogue choice and advances to the next node.
+// Returns an error if the choice number is invalid.
 func (ds *DialogueSystem) Choose(choice int) error {
 	currentNode := ds.Content[ds.Current]
 
