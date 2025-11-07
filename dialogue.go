@@ -3,9 +3,9 @@ package main
 import "fmt"
 
 const (
-	DIALOGUEBOX_SIZE_W = SCREEN_WIDTH
-	DIALOGUEBOX_SIZE_H = 200
-	DIALOGUEBOX_COLOR  = "black"
+	dialogueBoxWidth   = screenWidth
+	dialogueBoxHeight  = 200
+	dialogueBoxOffsetY = -20
 )
 
 type ID string
@@ -28,7 +28,7 @@ type DialogueSystem struct {
 }
 
 func NewDialogueSystem() *DialogueSystem {
-	rx, ry := BottomCenter.Offset(0, -20).Position(float32(DIALOGUEBOX_SIZE_W), float32(DIALOGUEBOX_SIZE_H))
+	rx, ry := BottomCenter.Offset(0, -20).Position(float32(dialogueBoxWidth), float32(dialogueBoxHeight))
 	return &DialogueSystem{
 		Content: map[ID]*DialogueNode{"first": &DialogueNode{
 			Speaker: "Vinicius",
@@ -46,8 +46,8 @@ func NewDialogueSystem() *DialogueSystem {
 		}},
 		Current: "first",
 		Box: &Rectangle{ // dialogue box
-			w:   DIALOGUEBOX_SIZE_W,
-			h:   DIALOGUEBOX_SIZE_H,
+			w:   dialogueBoxWidth,
+			h:   dialogueBoxHeight,
 			x:   int(rx),
 			y:   int(ry),
 			col: BLACK,

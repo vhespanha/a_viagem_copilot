@@ -12,6 +12,11 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/vector"
 )
 
+const (
+	screenWidth  = 1920
+	screenHeight = 1080
+)
+
 type Rectangle struct {
 	w, h, x, y int
 	col        color.RGBA
@@ -86,5 +91,5 @@ func (g *Game) Draw(screen *ebiten.Image) {
 }
 
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
-	return SCREEN_WIDTH, SCREEN_HEIGHT
+	return screenWidth, screenHeight
 }

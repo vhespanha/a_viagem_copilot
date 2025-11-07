@@ -8,11 +8,6 @@ import (
 	"github.com/hajimehoshi/ebiten/v2/text/v2"
 )
 
-const (
-	SCREEN_WIDTH  = 1920
-	SCREEN_HEIGHT = 1080
-)
-
 var (
 	faceSource *text.GoTextFaceSource
 	faceNormal *text.GoTextFace
