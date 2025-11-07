@@ -27,9 +27,9 @@ type Rect struct {
 	Size Vec2
 }
 
-// NewRect creates a new rectangle from position and size.
-func NewRect(x, y, width, height float32) Rect {
-	return Rect{
+// NewRect returns a pointer to a new rectangle from position and size.
+func NewRect(x, y, width, height float32) *Rect {
+	return &Rect{
 		Pos:  Vec2{x, y},
 		Size: Vec2{width, height},
 	}

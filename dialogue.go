@@ -6,9 +6,10 @@ import (
 )
 
 const (
-	dialogueBoxWidth   = screenWidth
-	dialogueBoxHeight  = 200
-	dialogueBoxOffsetY = -20
+	dialogueBoxWidth    = screenWidth
+	dialogueBoxHeight   = 200
+	dialogueBoxOffsetY  = -20
+	dialogueBoxChoicesY = 40 // TODO: figure out if this is sane
 )
 
 // Dialogue node IDs
@@ -33,19 +34,17 @@ type Choice struct {
 	NextID ID
 }
 
-// DialogueSystem manages the dialogue state and progression.
-type DialogueSystem struct {
+// Dialogue manages the dialogue state and progression.
+type Dialogue struct {
 	Content  map[ID]*DialogueNode
 	Current  ID
 	Box      *Rect
 	BoxColor color.RGBA
 }
 
-// NewDialogueSystem creates and initializes a new dialogue system.
-func NewDialogueSystem() *DialogueSystem {
-	rect := PositionRect(BottomCenter.Offset(0, dialogueBoxOffsetY),
-		dialogueBoxWidth, dialogueBoxHeight)
-	return &DialogueSystem{
+// NewDialogue creates and initializes a new dialogue system.
+func NewDialogue() *Dialogue {
+	return &Dialogue{
 		Content: map[ID]*DialogueNode{nodeIDFirst: &DialogueNode{
 			Speaker: "Vinicius",
 			Text:    "Feliz aniversário!",
@@ -60,30 +59,31 @@ func NewDialogueSystem() *DialogueSystem {
 			Choice1: nil,
 			Choice2: nil,
 		}},
-		Current:  nodeIDFirst,
-		Box:      &rect,
+		Current: nodeIDFirst,
+		Box: PositionRect(BottomCenter.Offset(0, dialogueBoxOffsetY),
+			dialogueBoxWidth, dialogueBoxHeight),
 		BoxColor: Black,
 	}
 }
 
 // Choose processes a dialogue choice and advances to the next node.
 // Returns an error if the choice number is invalid.
-func (ds *DialogueSystem) Choose(choice int) error {
-	currentNode := ds.Content[ds.Current]
+func (d *Dialogue) Choose(choice int) error {
+	currentNode := d.Content[d.Current]
 
 	switch choice {
 	case 1:
 		if currentNode.Choice1 == nil {
-			ds.Current = nodeIDFirst // for now we loop around
+			d.Current = nodeIDFirst // for now we loop around
 			return nil
 		}
-		ds.Current = currentNode.Choice1.NextID
+		d.Current = currentNode.Choice1.NextID
 		return nil
 	case 2:
 		if currentNode.Choice2 == nil {
 			return fmt.Errorf("choice 2 is not available")
 		}
-		ds.Current = currentNode.Choice2.NextID
+		d.Current = currentNode.Choice2.NextID
 		return nil
 	default:
 		return fmt.Errorf("must be 1 or 2")

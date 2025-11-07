@@ -5,13 +5,6 @@ import (
 	"log"
 
 	"github.com/hajimehoshi/ebiten/v2"
-	"github.com/hajimehoshi/ebiten/v2/text/v2"
-)
-
-var (
-	faceSource *text.GoTextFaceSource
-	faceNormal *text.GoTextFace
-	faceBig    *text.GoTextFace
 )
 
 func main() {

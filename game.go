@@ -13,8 +13,9 @@ import (
 
 // Game represents the main game state and implements the ebiten.Game interface.
 type Game struct {
-	fonts          *Fonts
-	dialogueSystem *DialogueSystem
+	fonts    *Fonts
+	dialogue *Dialogue
+	// clickables []*Clickable
 }
 
 // Fonts holds the font resources used for rendering text.
@@ -57,8 +58,8 @@ func createFace(source *text.GoTextFaceSource, size float64) *text.GoTextFace {
 
 func newGame() *Game {
 	return &Game{
-		fonts:          newFonts(),
-		dialogueSystem: NewDialogueSystem(),
+		fonts:    newFonts(),
+		dialogue: NewDialogue(),
 	}
 }
 
@@ -72,9 +73,9 @@ func (g *Game) Update() error {
 
 func (g *Game) handleMouseClick() error {
 	cx, cy := ebiten.CursorPosition()
-	if g.dialogueSystem.Box.Contains(cx, cy) {
+	if g.dialogue.Box.Contains(cx, cy) {
 		const firstChoiceOption = 1
-		return g.dialogueSystem.Choose(firstChoiceOption)
+		return g.dialogue.Choose(firstChoiceOption)
 	}
 	return nil
 }
@@ -83,11 +84,12 @@ func (g *Game) handleMouseClick() error {
 func (g *Game) Draw(screen *ebiten.Image) {
 	g.drawDialogueBox(screen)
 	g.drawDialogueText(screen)
+	g.drawDialogueChoices(screen)
 }
 
 func (g *Game) drawDialogueBox(screen *ebiten.Image) {
-	box := g.dialogueSystem.Box
-	boxColor := g.dialogueSystem.BoxColor
+	box := g.dialogue.Box
+	boxColor := g.dialogue.BoxColor
 	vector.FillRect(screen,
 		box.Pos.X, box.Pos.Y,
 		box.Size.X, box.Size.Y,
@@ -95,15 +97,31 @@ func (g *Game) drawDialogueBox(screen *ebiten.Image) {
 }
 
 func (g *Game) drawDialogueText(screen *ebiten.Image) {
-	box := g.dialogueSystem.Box
-	currentNode := g.dialogueSystem.Content[g.dialogueSystem.Current]
+	box := g.dialogue.Box
+	currentNode := g.dialogue.Content[g.dialogue.Current]
 
 	op := &text.DrawOptions{}
 	// it's ok to cast here, since it's a one off thing
-	op.GeoM.Translate(float64(box.Pos.X), float64(box.Pos.Y))
+	// TODO: scale this down with the types.Scale function
+	op.GeoM.Translate(float64(box.Pos.X), float64(box.Pos.Y-dialogueBoxChoicesY))
 	op.LineSpacing = g.fonts.normal.Size * lineSpacing
 
 	text.Draw(screen, currentNode.Text, g.fonts.normal, op)
+}
+
+func (g *Game) drawDialogueChoices(screen *ebiten.Image) {
+	// TODO: handle multiple choices
+	box := g.dialogue.Box
+	currentNode := g.dialogue.Content[g.dialogue.Current]
+	if currentNode.Choice1 != nil {
+		rect := NewRect(0, (box.Pos.Y + box.Size.Y - dialogueBoxChoicesY), box.Size.X, dialogueBoxChoicesY)
+		vector.FillRect(screen, rect.Pos.X, rect.Pos.Y, rect.Size.X, rect.Size.Y, Gray, false)
+		op := &text.DrawOptions{}
+		op.GeoM.Translate(float64(rect.Pos.X), float64(rect.Pos.Y))
+		op.LineSpacing = g.fonts.normal.Size * lineSpacing
+		text.Draw(screen, currentNode.Choice1.Text, g.fonts.normal, op)
+		return
+	}
 }
 
 // Layout defines the logical screen size.

@@ -34,7 +34,7 @@ var (
 )
 
 // PositionRect positions a rectangle using an anchor point.
-func PositionRect(anchor Anchor, width, height float32) Rect {
+func PositionRect(anchor Anchor, width, height float32) *Rect {
 	pos := anchor.Position(width, height)
 	return NewRect(pos.X, pos.Y, width, height)
 }
