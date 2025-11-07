@@ -24,12 +24,13 @@ const (
 )
 
 type Rectangle struct {
-	w, h, x, y int
-	col        color.RGBA
+	width, height int
+	x, y          int
+	color         color.RGBA
 }
 
 func (r *Rectangle) IsOnTop(cx, cy int) bool {
-	return cx >= r.x && cx < r.x+r.w && cy >= r.y && cy < r.y+r.h
+	return cx >= r.x && cx < r.x+r.width && cy >= r.y && cy < r.y+r.height
 }
 
 type Game struct {
@@ -86,7 +87,7 @@ func (g *Game) Update() error {
 
 func (g *Game) Draw(screen *ebiten.Image) {
 	vector.FillRect(screen, float32(g.dialogueSystem.Box.x), float32(g.dialogueSystem.Box.y),
-		float32(g.dialogueSystem.Box.w), float32(g.dialogueSystem.Box.h), g.dialogueSystem.Box.col, false)
+		float32(g.dialogueSystem.Box.width), float32(g.dialogueSystem.Box.height), g.dialogueSystem.Box.color, false)
 
 	op := &text.DrawOptions{}
 	op.GeoM.Translate(float64(g.dialogueSystem.Box.x), float64(g.dialogueSystem.Box.y))

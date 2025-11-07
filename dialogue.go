@@ -35,27 +35,27 @@ type DialogueSystem struct {
 func NewDialogueSystem() *DialogueSystem {
 	rx, ry := BottomCenter.Offset(0, dialogueBoxOffsetY).Position(float32(dialogueBoxWidth), float32(dialogueBoxHeight))
 	return &DialogueSystem{
-		Content: map[ID]*DialogueNode{"first": &DialogueNode{
+		Content: map[ID]*DialogueNode{nodeIDFirst: &DialogueNode{
 			Speaker: "Vinicius",
 			Text:    "Feliz aniversario!",
 			Choice1: &Choice{
 				Text:   "",
-				NextID: "second",
+				NextID: nodeIDSecond,
 			},
 			Choice2: nil,
-		}, "second": &DialogueNode{
+		}, nodeIDSecond: &DialogueNode{
 			Speaker: "Clara",
 			Text:    "Voce lembrou!",
 			Choice1: nil,
 			Choice2: nil,
 		}},
-		Current: "first",
+		Current: nodeIDFirst,
 		Box: &Rectangle{ // dialogue box
-			w:   dialogueBoxWidth,
-			h:   dialogueBoxHeight,
-			x:   int(rx),
-			y:   int(ry),
-			col: BLACK,
+			width:  dialogueBoxWidth,
+			height: dialogueBoxHeight,
+			x:      int(rx),
+			y:      int(ry),
+			color:  BLACK,
 		},
 	}
 }
