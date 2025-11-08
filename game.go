@@ -14,9 +14,12 @@ import (
 
 // Game represents the main game state and implements the ebiten.Game interface.
 type Game struct {
-	fonts      *Fonts
-	dialogue   *Dialogue
-	seenEvents *map[string]bool
+	fonts            *Fonts
+	dialogue         *Dialogue
+	seenEvents       *map[string]bool
+	lastCheckPointID ID
+	isOnDeathScreen  bool
+
 	// clickables []*Clickable
 }
 
@@ -40,6 +43,7 @@ const (
 
 const (
 	DontKnowChoiceString = "Não sei."
+	WrongChoiceString    = "Você escolheu errado.."
 )
 
 func newFonts() *Fonts {
@@ -64,43 +68,67 @@ func createFace(source *text.GoTextFaceSource, size float64) *text.GoTextFace {
 
 func newGame() *Game {
 	return &Game{
-		fonts:      newFonts(),
-		dialogue:   NewDialogue(),
-		seenEvents: new(map[string]bool),
+		fonts:            newFonts(),
+		dialogue:         NewDialogue(),
+		seenEvents:       new(map[string]bool),
+		lastCheckPointID: nodeIDFirst,
+		isOnDeathScreen:  false,
 	}
 }
 
 // Update handles game logic updates and processes input.
 func (g *Game) Update() error {
-	if inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
-		return g.handleMouseClick()
+	if !inpututil.IsMouseButtonJustPressed(ebiten.MouseButtonLeft) {
+		return nil
+	}
+	if g.isOnDeathScreen {
+		g.jumpToLastCheckPoint()
+		g.isOnDeathScreen = false
+	}
+
+	cx, cy := ebiten.CursorPosition()
+	node := g.getCurrentDialogueNode()
+
+	if node.Choices != nil {
+		return g.handleChoiceClick(cx, cy)
+	}
+
+	if g.dialogue.Box.Contains(cx, cy) {
+		g.dialogue.AdvanceDialogueNode()
+	}
+
+	return nil
+}
+
+func (g *Game) handleChoiceClick(cx, cy int) error {
+	choiceRects := g.createChoiceRects(len(*g.dialogue.GetCurrentNode().Choices), 8, 12)
+	for i, rect := range choiceRects {
+		if rect.Contains(cx, cy) {
+			correct, err := g.dialogue.GetCurrentNode().Choose(i)
+			if err != nil || !correct {
+				g.isOnDeathScreen = true
+				return nil
+			}
+			g.dialogue.AdvanceDialogueNode()
+		}
 	}
 	return nil
 }
 
-func (g *Game) handleMouseClick() error {
-	cursorX, cursorY := ebiten.CursorPosition()
-	choiceRects := g.createChoiceRects(len(*g.dialogue.GetCurrentNode().Choices), 8, 12)
-	for i := 0; i < len(choiceRects); i++ {
-		if choiceRects[i].Contains(cursorX, cursorY) {
-			correct, err := g.dialogue.GetCurrentNode().Choose(i)
-			if err != nil {
-				return err
-			} else if !correct {
-				// hancle wrong choice
-			}
-			//handle correct
-		}
-	}
-
-	return nil
+func (g *Game) jumpToLastCheckPoint() {
+	g.dialogue.CurrentID = g.lastCheckPointID
 }
 
 // Draw renders the game screen.
 func (g *Game) Draw(screen *ebiten.Image) {
-	g.drawDialogueBox(screen)
-	g.drawDialogueText(screen)
-	g.drawDialogueChoices(screen)
+	if g.isOnDeathScreen {
+		g.drawDeathScreen(screen)
+	} else {
+		g.drawDialogueBox(screen)
+		g.drawDialogueText(screen)
+		g.drawDialogueChoices(screen)
+	}
+
 }
 
 func (g *Game) drawDialogueBox(screen *ebiten.Image) {
@@ -117,27 +145,39 @@ func (g *Game) drawDialogueText(screen *ebiten.Image) {
 	text.Draw(screen, currentNode.Text, g.fonts.normal, textOptions)
 }
 
+func (g *Game) drawDeathScreen(screen *ebiten.Image) {
+	deathScreenRect := NewRect(0, 0, screenWidth, screenHeight)
+	drawFilledRect(screen, deathScreenRect, Gray)
+	textWeight, textHeight := text.Measure(WrongChoiceString, g.fonts.big, g.fonts.big.Size*lineSpacing)
+	centeredTextPos := CenterTextInRect(float32(textWeight), float32(textHeight), deathScreenRect)
+	deathScreenTextOption := g.createTextDrawOptions(centeredTextPos.X, centeredTextPos.Y)
+	text.Draw(screen, WrongChoiceString, g.fonts.big, deathScreenTextOption)
+}
+
 func (g *Game) drawDialogueChoices(screen *ebiten.Image) {
-	currentChoices := (*g.getCurrentDialogueNode().Choices)
-	unlocked := g.getCurrentDialogueNode().Unlocked
-	if unlocked {
-		rects := g.createChoiceRects(len(currentChoices), 8, 12)
-		for i := 0; i < len(currentChoices); i++ {
-			drawFilledRect(screen, rects[i], Gray)
-			textWeight, textHeight := text.Measure(currentChoices[i].Text, g.fonts.normal, g.fonts.normal.Size*lineSpacing)
-			centeredTextPos := CenterTextInRect(float32(textWeight), float32(textHeight), rects[i])
-			choiceTextOptions := g.createTextDrawOptions(centeredTextPos.X, centeredTextPos.Y)
-			text.Draw(screen, currentChoices[i].Text, g.fonts.normal, choiceTextOptions)
+	if g.getCurrentDialogueNode().Choices != nil {
+		currentChoices := (*g.getCurrentDialogueNode().Choices)
+		unlocked := g.getCurrentDialogueNode().Unlocked
+		if unlocked {
+			rects := g.createChoiceRects(len(currentChoices), 8, 12)
+			for i := 0; i < len(currentChoices); i++ {
+				drawFilledRect(screen, rects[i], Gray)
+				textWeight, textHeight := text.Measure(currentChoices[i].Text, g.fonts.normal, g.fonts.normal.Size*lineSpacing)
+				centeredTextPos := CenterTextInRect(float32(textWeight), float32(textHeight), rects[i])
+				choiceTextOptions := g.createTextDrawOptions(centeredTextPos.X, centeredTextPos.Y)
+				text.Draw(screen, currentChoices[i].Text, g.fonts.normal, choiceTextOptions)
+			}
+			return
 		}
+		// draw idk option
+		DontKnowRect := g.createChoiceRects(1, 8, 12)
+		drawFilledRect(screen, DontKnowRect[0], Gray)
+		textWeight, textHeight := text.Measure(DontKnowChoiceString, g.fonts.normal, g.fonts.normal.Size*lineSpacing)
+		centeredTextPos := CenterTextInRect(float32(textWeight), float32(textHeight), DontKnowRect[0])
+		choiceTextOptions := g.createTextDrawOptions(centeredTextPos.X, centeredTextPos.Y)
+		text.Draw(screen, DontKnowChoiceString, g.fonts.normal, choiceTextOptions)
 		return
 	}
-	// draw idk option
-	DontKnowRect := g.createChoiceRects(1, 8, 12)
-	drawFilledRect(screen, DontKnowRect[0], Gray)
-	textWeight, textHeight := text.Measure(DontKnowChoiceString, g.fonts.normal, g.fonts.normal.Size*lineSpacing)
-	centeredTextPos := CenterTextInRect(float32(textWeight), float32(textHeight), DontKnowRect[0])
-	choiceTextOptions := g.createTextDrawOptions(centeredTextPos.X, centeredTextPos.Y)
-	text.Draw(screen, DontKnowChoiceString, g.fonts.normal, choiceTextOptions)
 }
 
 // getCurrentDialogueNode returns the currently active dialogue node.

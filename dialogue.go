@@ -13,7 +13,7 @@ const (
 )
 
 var (
-	ErrorDoesntKnow = errors.New("Didn't know answer")
+	ErrorDoesntKnow = errors.New("didn't know answer")
 )
 
 // Dialogue node IDs
@@ -63,10 +63,13 @@ func NewDialogue() *Dialogue {
 			Speaker: "character",
 			Text:    "bla bla bla",
 			Choices: nil,
+			NextID:  nodeIDSecond,
 		}, nodeIDSecond: &DialogueNode{
-			Speaker: "character",
-			Text:    "bla bla bla??",
-			Choices: &[]Choice{firstChoice, secondChoice},
+			Speaker:  "character",
+			Text:     "bla bla bla??",
+			Unlocked: true,
+			Choices:  &[]Choice{firstChoice, secondChoice},
+			NextID:   nodeIDFirst,
 		}},
 		CurrentID: nodeIDFirst,
 		Box: PositionRect(BottomCenter.Offset(0, dialogueBoxOffsetY),
