@@ -2,6 +2,7 @@ package main
 
 import (
 	"bytes"
+	"image/color"
 	"log"
 
 	"github.com/hajimehoshi/ebiten/v2"
@@ -72,8 +73,8 @@ func (g *Game) Update() error {
 }
 
 func (g *Game) handleMouseClick() error {
-	cx, cy := ebiten.CursorPosition()
-	if g.dialogue.Box.Contains(cx, cy) {
+	cursorX, cursorY := ebiten.CursorPosition()
+	if g.dialogue.Box.Contains(cursorX, cursorY) {
 		const firstChoiceOption = 1
 		return g.dialogue.Choose(firstChoiceOption)
 	}
@@ -90,38 +91,56 @@ func (g *Game) Draw(screen *ebiten.Image) {
 func (g *Game) drawDialogueBox(screen *ebiten.Image) {
 	box := g.dialogue.Box
 	boxColor := g.dialogue.BoxColor
-	vector.FillRect(screen,
-		box.Pos.X, box.Pos.Y,
-		box.Size.X, box.Size.Y,
-		boxColor, false)
+	drawFilledRect(screen, box, boxColor)
 }
 
 func (g *Game) drawDialogueText(screen *ebiten.Image) {
 	box := g.dialogue.Box
-	currentNode := g.dialogue.Content[g.dialogue.Current]
+	currentNode := g.getCurrentDialogueNode()
 
-	op := &text.DrawOptions{}
-	// it's ok to cast here, since it's a one off thing
-	// TODO: scale this down with the types.Scale function
-	op.GeoM.Translate(float64(box.Pos.X), float64(box.Pos.Y-dialogueBoxChoicesY))
-	op.LineSpacing = g.fonts.normal.Size * lineSpacing
-
-	text.Draw(screen, currentNode.Text, g.fonts.normal, op)
+	textOptions := g.createTextDrawOptions(box.Pos.X, box.Pos.Y-dialogueBoxChoicesY)
+	text.Draw(screen, currentNode.Text, g.fonts.normal, textOptions)
 }
 
 func (g *Game) drawDialogueChoices(screen *ebiten.Image) {
-	// TODO: handle multiple choices
-	box := g.dialogue.Box
-	currentNode := g.dialogue.Content[g.dialogue.Current]
-	if currentNode.Choice1 != nil {
-		rect := NewRect(0, (box.Pos.Y + box.Size.Y - dialogueBoxChoicesY), box.Size.X, dialogueBoxChoicesY)
-		vector.FillRect(screen, rect.Pos.X, rect.Pos.Y, rect.Size.X, rect.Size.Y, Gray, false)
-		op := &text.DrawOptions{}
-		op.GeoM.Translate(float64(rect.Pos.X), float64(rect.Pos.Y))
-		op.LineSpacing = g.fonts.normal.Size * lineSpacing
-		text.Draw(screen, currentNode.Choice1.Text, g.fonts.normal, op)
+	currentNode := g.getCurrentDialogueNode()
+	if currentNode.Choice1 == nil {
 		return
 	}
+
+	choicesRect := g.createChoicesRect()
+	drawFilledRect(screen, choicesRect, Gray)
+
+	textWeight, textHeight := text.Measure(currentNode.Choice1.Text, g.fonts.normal, g.fonts.normal.Size*lineSpacing)
+
+	centeredTextPos := CenterTextInRect(float32(textWeight), float32(textHeight), choicesRect)
+
+	choiceTextOptions := g.createTextDrawOptions(centeredTextPos.X, centeredTextPos.Y)
+	text.Draw(screen, currentNode.Choice1.Text, g.fonts.normal, choiceTextOptions)
+}
+
+// getCurrentDialogueNode returns the currently active dialogue node.
+func (g *Game) getCurrentDialogueNode() *DialogueNode {
+	return g.dialogue.Content[g.dialogue.Current]
+}
+
+// drawFilledRect draws a filled rectangle on the screen with the specified color.
+func drawFilledRect(screen *ebiten.Image, rect *Rect, color color.RGBA) {
+	vector.FillRect(screen, rect.Pos.X, rect.Pos.Y, rect.Size.X, rect.Size.Y, color, false)
+}
+
+// createTextDrawOptions creates text drawing options with the specified position and line spacing.
+func (g *Game) createTextDrawOptions(x, y float32) *text.DrawOptions {
+	options := &text.DrawOptions{}
+	options.GeoM.Translate(float64(x), float64(y))
+	options.LineSpacing = g.fonts.normal.Size * lineSpacing
+	return options
+}
+
+// createChoicesRect creates the rectangle for dialogue choices based on the dialogue box.
+func (g *Game) createChoicesRect() *Rect {
+	box := g.dialogue.Box
+	return NewRect(0, box.Pos.Y+box.Size.Y-dialogueBoxChoicesY, box.Size.X, dialogueBoxChoicesY)
 }
 
 // Layout defines the logical screen size.

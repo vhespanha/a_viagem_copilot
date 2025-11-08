@@ -49,7 +49,7 @@ func NewDialogue() *Dialogue {
 			Speaker: "Vinicius",
 			Text:    "Feliz aniversário!",
 			Choice1: &Choice{
-				Text:   "",
+				Text:   "This is a choice!",
 				NextID: nodeIDSecond,
 			},
 			Choice2: nil,
