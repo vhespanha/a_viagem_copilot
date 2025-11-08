@@ -23,9 +23,9 @@ type ID string
 
 // DialogueNode represents a single node in the dialogue tree.
 type DialogueNode struct {
-	Speaker          string
-	Text             string
-	Choice1, Choice2 *Choice
+	Speaker string
+	Text    string
+	Choices []*Choice
 }
 
 // Choice represents a player's dialogue choice leading to another node.
@@ -44,20 +44,23 @@ type Dialogue struct {
 
 // NewDialogue creates and initializes a new dialogue system.
 func NewDialogue() *Dialogue {
+	firstChoice := &Choice{
+		Text:   "Claro que sim!",
+		NextID: nodeIDSecond,
+	}
+	secondChoice := &Choice{
+		Text:   "Claro que nao!",
+		NextID: nodeIDSecond,
+	}
 	return &Dialogue{
 		Content: map[ID]*DialogueNode{nodeIDFirst: &DialogueNode{
 			Speaker: "Vinicius",
 			Text:    "Feliz aniversário!",
-			Choice1: &Choice{
-				Text:   "This is a choice!",
-				NextID: nodeIDSecond,
-			},
-			Choice2: nil,
+			Choices: []*Choice{firstChoice, secondChoice},
 		}, nodeIDSecond: &DialogueNode{
 			Speaker: "Clara",
 			Text:    "Você lembrou!",
-			Choice1: nil,
-			Choice2: nil,
+			Choices: []*Choice{},
 		}},
 		Current: nodeIDFirst,
 		Box: PositionRect(BottomCenter.Offset(0, dialogueBoxOffsetY),
@@ -73,17 +76,17 @@ func (d *Dialogue) Choose(choice int) error {
 
 	switch choice {
 	case 1:
-		if currentNode.Choice1 == nil {
+		if len(currentNode.Choices) == 0 {
 			d.Current = nodeIDFirst // for now we loop around
 			return nil
 		}
-		d.Current = currentNode.Choice1.NextID
+		d.Current = currentNode.Choices[0].NextID
 		return nil
 	case 2:
-		if currentNode.Choice2 == nil {
+		if len(currentNode.Choices) == 1 {
 			return fmt.Errorf("choice 2 is not available")
 		}
-		d.Current = currentNode.Choice2.NextID
+		d.Current = currentNode.Choices[1].NextID
 		return nil
 	default:
 		return fmt.Errorf("must be 1 or 2")

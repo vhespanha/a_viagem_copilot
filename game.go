@@ -103,20 +103,15 @@ func (g *Game) drawDialogueText(screen *ebiten.Image) {
 }
 
 func (g *Game) drawDialogueChoices(screen *ebiten.Image) {
-	currentNode := g.getCurrentDialogueNode()
-	if currentNode.Choice1 == nil {
-		return
+	currentChoices := g.getCurrentDialogueNode().Choices
+	rects := g.createChoiceRects(len(currentChoices), 8, 12)
+	for i := 0; i < len(currentChoices); i++ {
+		drawFilledRect(screen, rects[i], Gray)
+		textWeight, textHeight := text.Measure(currentChoices[i].Text, g.fonts.normal, g.fonts.normal.Size*lineSpacing)
+		centeredTextPos := CenterTextInRect(float32(textWeight), float32(textHeight), rects[i])
+		choiceTextOptions := g.createTextDrawOptions(centeredTextPos.X, centeredTextPos.Y)
+		text.Draw(screen, currentChoices[i].Text, g.fonts.normal, choiceTextOptions)
 	}
-
-	choicesRect := g.createChoicesRect()
-	drawFilledRect(screen, choicesRect, Gray)
-
-	textWeight, textHeight := text.Measure(currentNode.Choice1.Text, g.fonts.normal, g.fonts.normal.Size*lineSpacing)
-
-	centeredTextPos := CenterTextInRect(float32(textWeight), float32(textHeight), choicesRect)
-
-	choiceTextOptions := g.createTextDrawOptions(centeredTextPos.X, centeredTextPos.Y)
-	text.Draw(screen, currentNode.Choice1.Text, g.fonts.normal, choiceTextOptions)
 }
 
 // getCurrentDialogueNode returns the currently active dialogue node.
@@ -137,10 +132,49 @@ func (g *Game) createTextDrawOptions(x, y float32) *text.DrawOptions {
 	return options
 }
 
-// createChoicesRect creates the rectangle for dialogue choices based on the dialogue box.
-func (g *Game) createChoicesRect() *Rect {
+// createChoiceRects returns a slice of Rects that evenly split the horizontal
+// space of the dialogue box for N choices. If n == 1 the single rect will
+// take the full available width (minus optional padding). You can pass a gap
+// (space between choices) and padding (space left and right inside the box).
+func (g *Game) createChoiceRects(n int, gap, padding float32) []*Rect {
 	box := g.dialogue.Box
-	return NewRect(0, box.Pos.Y+box.Size.Y-dialogueBoxChoicesY, box.Size.X, dialogueBoxChoicesY)
+	if n <= 0 {
+		return nil
+	}
+
+	// compute available horizontal width inside the box after padding
+	available := box.Size.X - padding*2
+	if available < 0 {
+		available = 0
+	}
+
+	// y and height of choice rects (keeps the same vertical location as before)
+	y := box.Pos.Y + box.Size.Y - dialogueBoxChoicesY
+	h := dialogueBoxChoicesY
+
+	// if there is only one choice, give it the full available width
+	if n == 1 {
+		x := box.Pos.X + padding
+		return []*Rect{NewRect(x, y, available, float32(h))}
+	}
+
+	// subtract total gaps between N items: (n-1) * gap
+	totalGaps := gap * float32(n-1)
+	usable := available - totalGaps
+	if usable < 0 {
+		// not enough space for the requested gap; clamp to zero width items
+		usable = 0
+	}
+
+	width := usable / float32(n)
+
+	// create rects positioned left-to-right
+	rects := make([]*Rect, n)
+	for i := 0; i < n; i++ {
+		x := box.Pos.X + padding + float32(i)*(width+gap)
+		rects[i] = NewRect(x, y, width, float32(h))
+	}
+	return rects
 }
 
 // Layout defines the logical screen size.
