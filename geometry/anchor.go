@@ -1,4 +1,5 @@
-package main
+// Package geometry provides 2D geometric primitives and positioning utilities.
+package geometry
 
 // Anchor represents a position relative to an anchor point.
 // AnchorX and AnchorY define the anchor point (0-1 range), while OffsetX and
@@ -18,7 +19,7 @@ func (a Anchor) Position(objWidth, objHeight, containerWidth, containerHeight fl
 
 // PositionInScreen calculates the absolute screen position for an object with
 // given dimensions.
-func (a Anchor) PositionInScreen(objWidth, objHeight float32) Vec2 {
+func (a Anchor) PositionInScreen(objWidth, objHeight float32, screenWidth, screenHeight int) Vec2 {
 	return a.Position(objWidth, objHeight, float32(screenWidth), float32(screenHeight))
 }
 
@@ -41,8 +42,8 @@ var (
 )
 
 // PositionRect positions a rectangle using an anchor point.
-func PositionRect(anchor Anchor, width, height float32) *Rect {
-	pos := anchor.PositionInScreen(width, height)
+func PositionRect(anchor Anchor, width, height float32, screenWidth, screenHeight int) *Rect {
+	pos := anchor.PositionInScreen(width, height, screenWidth, screenHeight)
 	return NewRect(pos.X, pos.Y, width, height)
 }
 
