@@ -14,8 +14,9 @@ import (
 
 // Game represents the main game state and implements the ebiten.Game interface.
 type Game struct {
-	fonts    *Fonts
-	dialogue *Dialogue
+	fonts      *Fonts
+	dialogue   *Dialogue
+	seenEvents *map[string]bool
 	// clickables []*Clickable
 }
 
@@ -35,6 +36,10 @@ const (
 const (
 	screenWidth  = 1920
 	screenHeight = 1080
+)
+
+const (
+	DontKnowChoiceString = "Não sei."
 )
 
 func newFonts() *Fonts {
@@ -59,8 +64,9 @@ func createFace(source *text.GoTextFaceSource, size float64) *text.GoTextFace {
 
 func newGame() *Game {
 	return &Game{
-		fonts:    newFonts(),
-		dialogue: NewDialogue(),
+		fonts:      newFonts(),
+		dialogue:   NewDialogue(),
+		seenEvents: new(map[string]bool),
 	}
 }
 
@@ -74,10 +80,19 @@ func (g *Game) Update() error {
 
 func (g *Game) handleMouseClick() error {
 	cursorX, cursorY := ebiten.CursorPosition()
-	if g.dialogue.Box.Contains(cursorX, cursorY) {
-		const firstChoiceOption = 1
-		return g.dialogue.Choose(firstChoiceOption)
+	choiceRects := g.createChoiceRects(len(*g.dialogue.GetCurrentNode().Choices), 8, 12)
+	for i := 0; i < len(choiceRects); i++ {
+		if choiceRects[i].Contains(cursorX, cursorY) {
+			correct, err := g.dialogue.GetCurrentNode().Choose(i)
+			if err != nil {
+				return err
+			} else if !correct {
+				// hancle wrong choice
+			}
+			//handle correct
+		}
 	}
+
 	return nil
 }
 
@@ -103,20 +118,31 @@ func (g *Game) drawDialogueText(screen *ebiten.Image) {
 }
 
 func (g *Game) drawDialogueChoices(screen *ebiten.Image) {
-	currentChoices := g.getCurrentDialogueNode().Choices
-	rects := g.createChoiceRects(len(currentChoices), 8, 12)
-	for i := 0; i < len(currentChoices); i++ {
-		drawFilledRect(screen, rects[i], Gray)
-		textWeight, textHeight := text.Measure(currentChoices[i].Text, g.fonts.normal, g.fonts.normal.Size*lineSpacing)
-		centeredTextPos := CenterTextInRect(float32(textWeight), float32(textHeight), rects[i])
-		choiceTextOptions := g.createTextDrawOptions(centeredTextPos.X, centeredTextPos.Y)
-		text.Draw(screen, currentChoices[i].Text, g.fonts.normal, choiceTextOptions)
+	currentChoices := (*g.getCurrentDialogueNode().Choices)
+	unlocked := g.getCurrentDialogueNode().Unlocked
+	if unlocked {
+		rects := g.createChoiceRects(len(currentChoices), 8, 12)
+		for i := 0; i < len(currentChoices); i++ {
+			drawFilledRect(screen, rects[i], Gray)
+			textWeight, textHeight := text.Measure(currentChoices[i].Text, g.fonts.normal, g.fonts.normal.Size*lineSpacing)
+			centeredTextPos := CenterTextInRect(float32(textWeight), float32(textHeight), rects[i])
+			choiceTextOptions := g.createTextDrawOptions(centeredTextPos.X, centeredTextPos.Y)
+			text.Draw(screen, currentChoices[i].Text, g.fonts.normal, choiceTextOptions)
+		}
+		return
 	}
+	// draw idk option
+	DontKnowRect := g.createChoiceRects(1, 8, 12)
+	drawFilledRect(screen, DontKnowRect[0], Gray)
+	textWeight, textHeight := text.Measure(DontKnowChoiceString, g.fonts.normal, g.fonts.normal.Size*lineSpacing)
+	centeredTextPos := CenterTextInRect(float32(textWeight), float32(textHeight), DontKnowRect[0])
+	choiceTextOptions := g.createTextDrawOptions(centeredTextPos.X, centeredTextPos.Y)
+	text.Draw(screen, DontKnowChoiceString, g.fonts.normal, choiceTextOptions)
 }
 
 // getCurrentDialogueNode returns the currently active dialogue node.
 func (g *Game) getCurrentDialogueNode() *DialogueNode {
-	return g.dialogue.Content[g.dialogue.Current]
+	return g.dialogue.Nodes[g.dialogue.CurrentID]
 }
 
 // drawFilledRect draws a filled rectangle on the screen with the specified color.
