@@ -1,6 +1,8 @@
 module github.com/vhespanha/tour_clara
 
-go 1.25.1
+go 1.24.0
+
+toolchain go1.24.9
 
 require github.com/hajimehoshi/ebiten/v2 v2.9.4
 

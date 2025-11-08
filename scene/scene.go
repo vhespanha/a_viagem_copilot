@@ -1,4 +1,5 @@
-package main
+// Package scene provides scene definitions and background management.
+package scene
 
 import "github.com/hajimehoshi/ebiten/v2"
 
