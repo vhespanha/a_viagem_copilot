@@ -62,10 +62,7 @@ func (g *Game) Update() error {
 
 func (g *Game) handleChoiceClick(cx, cy int) error {
 	node := g.dialogue.GetCurrentNode()
-	numChoices := 1 // default for "don't know" option
-	if node.Unlocked && node.Choices != nil {
-		numChoices = len(*node.Choices)
-	}
+	numChoices := getNumChoices(node)
 
 	choiceRects := createChoiceRects(g.dialogue.Box, numChoices, 8, 12)
 	for i, rect := range choiceRects {
@@ -97,10 +94,7 @@ func (g *Game) Draw(screen *ebiten.Image) {
 
 	node := g.dialogue.GetCurrentNode()
 	if node.Choices != nil {
-		numChoices := 1 // default for "don't know" option
-		if node.Unlocked && node.Choices != nil {
-			numChoices = len(*node.Choices)
-		}
+		numChoices := getNumChoices(node)
 		choiceRects := createChoiceRects(g.dialogue.Box, numChoices, 8, 12)
 		ui.DrawDialogueChoices(screen, g.dialogue, g.fonts, choiceRects)
 	}
@@ -109,6 +103,16 @@ func (g *Game) Draw(screen *ebiten.Image) {
 // Layout defines the logical screen size.
 func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
 	return ScreenWidth, ScreenHeight
+}
+
+// getNumChoices returns the number of choices to display for a dialogue node.
+// Returns 1 for locked nodes (showing "don't know" option) or the actual
+// number of choices for unlocked nodes.
+func getNumChoices(node *dialogue.Node) int {
+	if node.Unlocked && node.Choices != nil {
+		return len(*node.Choices)
+	}
+	return 1 // default for "don't know" option
 }
 
 // createChoiceRects returns a slice of Rects that evenly split the horizontal
