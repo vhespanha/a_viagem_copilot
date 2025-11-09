@@ -11,7 +11,7 @@ serve: build
 	@python3 -m http.server -d build
 
 format:
-	@goimports -w .
+	@golines -w .
 
 check: format
 	@GOOS=js GOARCH=wasm go vet ./...
@@ -22,4 +22,4 @@ clean:
 
 devtools:
 	@go install honnef.co/go/tools/cmd/staticcheck@latest
-	@go install golang.org/x/tools/cmd/goimports@latest
+	@go install github.com/segmentio/golines@latest
