@@ -1,3 +1,4 @@
+// Package ui provides user interface rendering functions and resources.
 package ui
 
 import "image/color"

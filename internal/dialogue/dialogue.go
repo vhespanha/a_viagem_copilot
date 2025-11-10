@@ -4,16 +4,6 @@ package dialogue
 
 import (
 	"errors"
-	"image/color"
-
-	"github.com/vhespanha/a_viagem/internal/geometry"
-)
-
-const (
-	BoxWidth   = 1920 // screen width
-	BoxHeight  = 200
-	BoxOffsetY = -20
-	ChoicesY   = 40
 )
 
 var (
@@ -48,13 +38,10 @@ type Choice struct {
 type Dialogue struct {
 	Nodes     map[ID]*Node
 	CurrentID ID
-	// TODO: decouple dialogue box from dialogue system logic
-	Box      *geometry.Rect
-	BoxColor color.RGBA
 }
 
 // New creates and initializes a new dialogue system.
-func New(screenWidth, screenHeight int) *Dialogue {
+func New() *Dialogue {
 	firstChoice := Choice{
 		Text:    "yes",
 		Correct: true,
@@ -80,12 +67,6 @@ func New(screenWidth, screenHeight int) *Dialogue {
 			},
 		},
 		CurrentID: NodeIDFirst,
-		Box: geometry.PositionRect(
-			geometry.BottomCenter.Offset(0, BoxOffsetY),
-			BoxWidth, BoxHeight,
-			screenWidth, screenHeight,
-		),
-		BoxColor: color.RGBA{0, 0, 0, 0xff}, // Black
 	}
 }
 
