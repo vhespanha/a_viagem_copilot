@@ -28,3 +28,10 @@ func (r *Rect) ContainsFloat(x, y float32) bool {
 	return x >= r.Pos.X && x < r.Pos.X+r.Size.X &&
 		y >= r.Pos.Y && y < r.Pos.Y+r.Size.Y
 }
+
+// Scale returns a new rectangle scaled by factor
+func (r *Rect) Scale(factor float32) *Rect {
+	sx, sy := (r.Size.X * factor), (r.Size.Y * factor)
+	pos := CenterInRect(sx, sy, r)
+	return NewRect(pos.X, pos.Y, sx, sy)
+}

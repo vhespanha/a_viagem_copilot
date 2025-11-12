@@ -14,7 +14,7 @@ type Game struct {
 	dialogue         *dialogue.Dialogue
 	seenEvents       *map[string]bool
 	lastCheckPointID dialogue.ID
-	view             *ui.View
+	view             *ui.UI
 }
 
 // New creates and initializes a new game.

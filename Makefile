@@ -11,7 +11,7 @@ serve: build
 	@python3 -m http.server -d build
 
 format:
-	@golines -w .
+	@golines -w -t 8 .
 
 check: format
 	@GOOS=js GOARCH=wasm go vet ./...
