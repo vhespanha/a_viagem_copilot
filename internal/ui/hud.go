@@ -16,9 +16,10 @@ type DeathScreen struct {
 func newDeathScreen(font *text.GoTextFace) *DeathScreen {
 	return &DeathScreen{
 		baseElement: baseElement{
-			id:       DeathScreenID,
-			bounds:   geometry.NewRect(0, 0, 1920, 1080),
-			isActive: false,
+			id:     DeathScreenID,
+			bounds: geometry.NewRect(0, 0, 1920, 1080),
+			active: false,
+			action: HideDeathScreen,
 		},
 		font: font,
 	}
@@ -47,11 +48,16 @@ func newFullScreenButton() *FullScreenButton {
 				fullScreenButtonSize, fullScreenButtonSize,
 				ScreenWidth, ScreenHeight,
 			),
-			isActive: false,
+			active: false,
+			action: ToggleFullScreen,
 		},
 	}
 }
 
 func (b *FullScreenButton) Draw(screen *ebiten.Image) {
 	drawFilledRect(screen, b.bounds, Gray)
+}
+
+func (b *FullScreenButton) Update() {
+	ebiten.SetFullscreen(!ebiten.IsFullscreen())
 }

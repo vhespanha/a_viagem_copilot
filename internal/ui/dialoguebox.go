@@ -21,7 +21,18 @@ type DialogueBox struct {
 	textBounds          *geometry.Rect
 	normalFont, bigFont *text.GoTextFace
 	dialogue            *string
-	choices             []ChoiceButton
+	choices             []*ChoiceButton
+}
+
+func (d *DialogueBox) Update(dialogue *string, choices []string) {
+	d.Activate()
+	d.dialogue = dialogue
+	d.choices = d.newChoices(choices, d.normalFont)
+}
+
+func (d *DialogueBox) CustomClear() {
+	d.dialogue = nil
+	d.choices = nil
 }
 
 func (d *DialogueBox) Draw(screen *ebiten.Image) {
@@ -39,7 +50,7 @@ func (d *DialogueBox) Draw(screen *ebiten.Image) {
 func drawDialogueText(screen *ebiten.Image, font *text.GoTextFace, dialogue *string, bounds *geometry.Rect) {
 	to := createTextDrawOptions(
 		bounds.Pos.X, bounds.Pos.Y,
-		font.Size*LineSpacing,
+		font.Size*lineSpacing,
 	)
 	text.Draw(screen, *dialogue, font, to)
 }
@@ -56,12 +67,13 @@ func NewDialogueBox(normalFont, bigFont *text.GoTextFace) *DialogueBox {
 
 	return &DialogueBox{
 		baseElement: baseElement{
-			id:       DialogueBoxID,
-			bounds:   ob,
-			isActive: true,
+			id:     DialogueBoxID,
+			bounds: ob,
+			active: true,
+			action: UpdateDialogueBox,
 		},
 		textBounds: ib,
-		choices:    make([]ChoiceButton, 0, 2),
+		choices:    make([]*ChoiceButton, 0, 2),
 		normalFont: normalFont,
 		bigFont:    bigFont,
 	}
@@ -86,9 +98,10 @@ func newChoiceButton(
 ) *ChoiceButton {
 	return &ChoiceButton{
 		baseElement: baseElement{
-			id:       id,
-			bounds:   bounds,
-			isActive: true,
+			id:     id,
+			bounds: bounds,
+			active: true,
+			action: UpdateDialogueBox,
 		},
 		label: label,
 		font:  font,

@@ -38,13 +38,13 @@ func drawCenteredText(
 	tw, th := text.Measure(
 		s,
 		font,
-		font.Size*LineSpacing,
+		font.Size*lineSpacing,
 	)
 	centeredTextPos := geometry.CenterInRect(
 		float32(tw), float32(th), bounds,
 	)
 	textOption := createTextDrawOptions(
-		centeredTextPos.X, centeredTextPos.Y, font.Size*LineSpacing,
+		centeredTextPos.X, centeredTextPos.Y, font.Size*lineSpacing,
 	)
 	text.Draw(screen, s, font, textOption)
 }

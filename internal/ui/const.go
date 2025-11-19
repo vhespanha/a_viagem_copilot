@@ -19,3 +19,13 @@ const (
 	// hud elements
 	FullScreenButtonID
 )
+
+type CommandID uint8
+
+const (
+	UpdateDialogueBox CommandID = iota
+	HideDialogue
+	ShowDeathScreen
+	HideDeathScreen
+	ToggleFullScreen
+)

@@ -3,36 +3,54 @@ package ui
 import "github.com/hajimehoshi/ebiten/v2"
 
 type UI struct {
-	OnClick func(id ElementID) // defined by game logic?
-
 	elements []element
-	fonts    *Fonts
-	screen   *ebiten.Image
+	faces    *faces
 }
 
-func New(screen *ebiten.Image) *UI {
+func New() *UI {
 	return &UI{
-		OnClick: nil, // maybe implemented on logic layer
-
 		elements: nil, // empty for now
-		fonts:    NewFonts(),
-		screen:   screen,
+		faces:    newFaces(),
+	}
+}
+
+func (ui *UI) Draw(screen *ebiten.Image) {
+	for _, el := range ui.elements {
+		if el.Active() && el.Draw != nil {
+			el.Draw(screen)
+		}
 	}
 }
 
 func (ui *UI) HandleClick(cx, cy int) {
 	for _, el := range ui.elements {
-		if el.Contains(cx, cy) && ui.OnClick != nil {
-			ui.OnClick(el.ID())
+		if el.Contains(cx, cy) && el.Active() {
+
 		}
 		return
 	}
 }
 
-func (ui *UI) Draw() {
+func (ui *UI) Command(cmd CommandID, data any) {
+	switch cmd {
+	case UpdateDialogueBox:
+		ui.getElement(DialogueBoxID).Update(data)
+	case HideDialogue:
+		ui.getElement(DialogueBoxID).CustomClear()
+	case ShowDeathScreen:
+		ui.getElement(DeathScreenID).Activate()
+	case HideDeathScreen:
+		ui.getElement(DeathScreenID).Clear()
+	case ToggleFullScreen:
+		ui.getElement(FullScreenButtonID).Update(nil)
+	}
+}
+
+func (ui *UI) getElement(id ElementID) element {
 	for _, el := range ui.elements {
-		if el.IsActive() && el.Draw != nil {
-			el.Draw(ui.screen)
+		if el.ID() == id {
+			return el
 		}
 	}
+	return nil
 }

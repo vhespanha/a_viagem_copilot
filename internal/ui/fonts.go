@@ -9,20 +9,20 @@ import (
 )
 
 const (
-	FontSizeNormal = 24
-	FontSizeBig    = 32
-	LineSpacing    = 1.5
+	fontSizeNormal = 24
+	fontSizeBig    = 32
+	lineSpacing    = 1.5
 )
 
-// Fonts holds the font resources used for rendering text.
-type Fonts struct {
-	Source *text.GoTextFaceSource
-	Normal *text.GoTextFace
-	Big    *text.GoTextFace
+// faces holds the font resources used for rendering text.
+type faces struct {
+	source *text.GoTextFaceSource
+	normal *text.GoTextFace
+	big    *text.GoTextFace
 }
 
-// NewFonts creates and initializes font resources.
-func NewFonts() *Fonts {
+// newFaces creates and initializes font resources.
+func newFaces() *faces {
 	faceSource, err := text.NewGoTextFaceSource(
 		bytes.NewReader(fonts.MPlus1pRegular_ttf),
 	)
@@ -30,10 +30,10 @@ func NewFonts() *Fonts {
 		log.Fatal(err)
 	}
 
-	return &Fonts{
-		Source: faceSource,
-		Normal: createFace(faceSource, FontSizeNormal),
-		Big:    createFace(faceSource, FontSizeBig),
+	return &faces{
+		source: faceSource,
+		normal: createFace(faceSource, fontSizeNormal),
+		big:    createFace(faceSource, fontSizeBig),
 	}
 }
 
