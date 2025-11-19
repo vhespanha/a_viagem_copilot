@@ -17,11 +17,13 @@ type Game struct {
 
 // New creates and initializes a new game.
 func New() *Game {
-	return &Game{
+	g := &Game{
 		ui:               ui.New(),
 		dialogue:         dialogue.New(),
 		lastCheckPointID: dialogue.NodeIDFirst,
 	}
+	g.showCurrentNode()
+	return g
 }
 
 // Update handles game logic updates and processes input.
