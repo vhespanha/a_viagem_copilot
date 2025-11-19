@@ -87,6 +87,15 @@ func drawDeathScreen(screen *ebiten.Image, bounds *geometry.Rect, font *text.GoT
 	drawCenteredText(screen, "Você escolheu errado...", bounds, font)
 }
 
+func drawClickableElement(screen *ebiten.Image, elem *Element, font *text.GoTextFace) {
+	// Default rendering: semi-transparent rect with ID as text
+	// Games can customize by checking elem.Data
+	drawFilledRect(screen, elem.Bounds, color.RGBA{0x3f, 0x3f, 0x3f, 0x7f})
+	if elem.ID != "" {
+		drawCenteredText(screen, string(elem.ID), elem.Bounds, font)
+	}
+}
+
 func allocChoiceBounds(n int) []*geometry.Rect {
 	if n == 0 {
 		return nil

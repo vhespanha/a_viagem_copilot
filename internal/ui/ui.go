@@ -6,6 +6,17 @@ import (
 	"github.com/vhespanha/a_viagem/internal/geometry"
 )
 
+// ElementID identifies different UI elements
+type ElementID string
+
+// Element represents a clickable UI element
+type Element struct {
+	ID      ElementID
+	Bounds  *geometry.Rect
+	Visible bool
+	Data    any // element-specific data
+}
+
 // UI holds all UI state and resources
 type UI struct {
 	// fonts
@@ -25,6 +36,9 @@ type UI struct {
 
 	// fullscreen button
 	fullscreenBounds *geometry.Rect
+
+	// point-and-click elements
+	clickableElements []Element
 }
 
 // New creates a new UI
@@ -38,6 +52,7 @@ func New() *UI {
 		fullscreenBounds:   makeFullscreenButton(),
 		dialogueVisible:    false,
 		deathScreenVisible: false,
+		clickableElements:  make([]Element, 0),
 	}
 }
 
@@ -46,6 +61,13 @@ func Draw(ui *UI, screen *ebiten.Image) {
 	if ui.deathScreenVisible {
 		drawDeathScreen(screen, ui.deathScreenBounds, ui.bigFont)
 		return
+	}
+
+	// draw point-and-click elements
+	for _, elem := range ui.clickableElements {
+		if elem.Visible {
+			drawClickableElement(screen, &elem, ui.normalFont)
+		}
 	}
 
 	if ui.dialogueVisible {
@@ -69,15 +91,22 @@ func HandleClick(ui *UI, cx, cy int) ClickResult {
 		return ClickResult{Type: ClickFullscreen}
 	}
 
-	// check dialogue choices
+	// check dialogue choices first (higher priority than dialogue box)
 	for i, bounds := range ui.choiceBounds {
 		if bounds != nil && bounds.Contains(cx, cy) {
 			return ClickResult{Type: ClickChoice, ChoiceIndex: i}
 		}
 	}
 
-	// dialogue box
-	if ui.dialogueVisible && ui.dialogueBox.Contains(cx, cy) {
+	// check point-and-click elements
+	for i, elem := range ui.clickableElements {
+		if elem.Visible && elem.Bounds != nil && elem.Bounds.Contains(cx, cy) {
+			return ClickResult{Type: ClickElement, ElementIndex: i, ElementID: elem.ID}
+		}
+	}
+
+	// dialogue box - only clickable when no choices are shown
+	if ui.dialogueVisible && len(ui.choices) == 0 && ui.dialogueBox.Contains(cx, cy) {
 		return ClickResult{Type: ClickDialogue}
 	}
 
@@ -93,12 +122,15 @@ const (
 	ClickChoice
 	ClickDeathScreen
 	ClickFullscreen
+	ClickElement // for point-and-click elements
 )
 
 // ClickResult contains information about what was clicked
 type ClickResult struct {
-	Type        ClickType
-	ChoiceIndex int // only relevant for ClickChoice
+	Type         ClickType
+	ChoiceIndex  int       // only relevant for ClickChoice
+	ElementIndex int       // only relevant for ClickElement
+	ElementID    ElementID // only relevant for ClickElement
 }
 
 // ShowDialogue displays dialogue text with optional choices
@@ -130,6 +162,53 @@ func HideDeathScreen(ui *UI) {
 // ToggleFullscreen toggles fullscreen mode
 func ToggleFullscreen() {
 	ebiten.SetFullscreen(!ebiten.IsFullscreen())
+}
+
+// AddElement adds a clickable element to the UI
+func AddElement(ui *UI, id ElementID, bounds *geometry.Rect, data any) {
+	ui.clickableElements = append(ui.clickableElements, Element{
+		ID:      id,
+		Bounds:  bounds,
+		Visible: true,
+		Data:    data,
+	})
+}
+
+// RemoveElement removes a clickable element by ID
+func RemoveElement(ui *UI, id ElementID) {
+	for i, elem := range ui.clickableElements {
+		if elem.ID == id {
+			ui.clickableElements = append(
+				ui.clickableElements[:i],
+				ui.clickableElements[i+1:]...)
+			return
+		}
+	}
+}
+
+// ClearElements removes all clickable elements
+func ClearElements(ui *UI) {
+	ui.clickableElements = make([]Element, 0)
+}
+
+// SetElementVisible sets the visibility of an element
+func SetElementVisible(ui *UI, id ElementID, visible bool) {
+	for i := range ui.clickableElements {
+		if ui.clickableElements[i].ID == id {
+			ui.clickableElements[i].Visible = visible
+			return
+		}
+	}
+}
+
+// GetElement returns an element by ID, or nil if not found
+func GetElement(ui *UI, id ElementID) *Element {
+	for i := range ui.clickableElements {
+		if ui.clickableElements[i].ID == id {
+			return &ui.clickableElements[i]
+		}
+	}
+	return nil
 }
 
 func makeDialogueBox() *geometry.Rect {

@@ -8,11 +8,21 @@ import (
 	"github.com/vhespanha/a_viagem/internal/ui"
 )
 
+// GameState represents the current mode of the game
+type GameState int
+
+const (
+	StateDialogue GameState = iota
+	StatePointAndClick
+	StatePaused
+)
+
 // Game represents the main game state and implements the ebiten.Game interface.
 type Game struct {
 	dialogue         *dialogue.Dialogue
 	lastCheckPointID dialogue.ID
 	ui               *ui.UI
+	state            GameState
 }
 
 // New creates and initializes a new game.
@@ -21,6 +31,7 @@ func New() *Game {
 		ui:               ui.New(),
 		dialogue:         dialogue.New(),
 		lastCheckPointID: dialogue.NodeIDFirst,
+		state:            StateDialogue, // start in dialogue mode
 	}
 	g.showCurrentNode()
 	return g
@@ -45,14 +56,29 @@ func (g *Game) Update() error {
 		g.showCurrentNode()
 
 	case ui.ClickChoice:
-		g.handleChoiceClick(click.ChoiceIndex)
+		if g.state == StateDialogue {
+			g.handleChoiceClick(click.ChoiceIndex)
+		}
 
 	case ui.ClickDialogue:
-		g.dialogue.Advance()
-		g.showCurrentNode()
+		if g.state == StateDialogue {
+			g.dialogue.Advance()
+			g.showCurrentNode()
+		}
+
+	case ui.ClickElement:
+		if g.state == StatePointAndClick {
+			g.handleElementClick(click.ElementID)
+		}
 	}
 
 	return nil
+}
+
+func (g *Game) handleElementClick(elementID ui.ElementID) {
+	// Handle point-and-click element clicks
+	// Game logic can be implemented here
+	// For now, just a placeholder
 }
 
 func (g *Game) handleChoiceClick(choiceIndex int) {
@@ -91,6 +117,31 @@ func (g *Game) showCurrentNode() {
 	}
 
 	ui.ShowDialogue(g.ui, node.Text, choicesText)
+}
+
+// SetState changes the game state and manages UI transitions
+func (g *Game) SetState(newState GameState) {
+	g.state = newState
+
+	switch newState {
+	case StateDialogue:
+		// Show dialogue UI, hide point-and-click elements
+		ui.ClearElements(g.ui)
+		g.showCurrentNode()
+
+	case StatePointAndClick:
+		// Hide dialogue, show point-and-click elements
+		ui.HideDialogue(g.ui)
+		// Game can add clickable elements here using ui.AddElement
+
+	case StatePaused:
+		// Pause state management
+	}
+}
+
+// GetState returns the current game state
+func (g *Game) GetState() GameState {
+	return g.state
 }
 
 // Draw renders the game screen.
