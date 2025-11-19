@@ -8,20 +8,33 @@ import (
 	"github.com/vhespanha/a_viagem/internal/ui"
 )
 
+// GameState represents the current mode of the game
+type GameState int
+
+const (
+	StateDialogue GameState = iota
+	StatePointAndClick
+	StatePaused
+)
+
 // Game represents the main game state and implements the ebiten.Game interface.
 type Game struct {
 	dialogue         *dialogue.Dialogue
 	lastCheckPointID dialogue.ID
 	ui               *ui.UI
+	state            GameState
 }
 
 // New creates and initializes a new game.
 func New() *Game {
-	return &Game{
+	g := &Game{
 		ui:               ui.New(),
 		dialogue:         dialogue.New(),
 		lastCheckPointID: dialogue.NodeIDFirst,
+		state:            StateDialogue, // start in dialogue mode
 	}
+	g.showCurrentNode()
+	return g
 }
 
 // Update handles game logic updates and processes input.
@@ -31,76 +44,112 @@ func (g *Game) Update() error {
 	}
 
 	cx, cy := ebiten.CursorPosition()
+	click := ui.HandleClick(g.ui, cx, cy)
 
-	// if g.view.ContainsFullScreenWidget(cx, cy) {
-	// 	ebiten.SetFullscreen(!ebiten.IsFullscreen())
-	// }
+	switch click.Type {
+	case ui.ClickFullscreen:
+		ui.ToggleFullscreen()
 
-	// if g.view.IsOnDeathScreen() {
-	// 	g.jumpToLastCheckPoint()
-	// 	g.view.ToggleDeathScreen()
-	// 	return nil
-	// }
+	case ui.ClickDeathScreen:
+		g.jumpToLastCheckPoint()
+		ui.HideDeathScreen(g.ui)
+		g.showCurrentNode()
 
-	// node := g.dialogue.GetCurrentNode()
+	case ui.ClickChoice:
+		if g.state == StateDialogue {
+			g.handleChoiceClick(click.ChoiceIndex)
+		}
 
-	// if node.Choices != nil {
-	// 	return g.handleChoiceClick(cx, cy)
-	// }
+	case ui.ClickDialogue:
+		if g.state == StateDialogue {
+			g.dialogue.Advance()
+			g.showCurrentNode()
+		}
 
-	// if g.view.ContainsDialogueBox(cx, cy) {
-	// 	g.dialogue.Advance()
-	// }
+	case ui.ClickElement:
+		if g.state == StatePointAndClick {
+			g.handleElementClick(click.ElementID)
+		}
+	}
 
 	return nil
 }
 
-// func (g *Game) handleChoiceClick(cx, cy int) error {
-// 	node := g.dialogue.GetCurrentNode()
-// 	contains, choice := g.view.ContainsDialogueChoice(cx, cy)
-// 	if contains {
-// 		correct, err := node.Choose(choice)
-// 		if err != nil || !correct {
-// 			g.view.ToggleDeathScreen()
-// 			return nil
-// 		}
-// 		g.dialogue.Advance()
+func (g *Game) handleElementClick(elementID ui.ElementID) {
+	// Handle point-and-click element clicks
+	// Game logic can be implemented here
+	// For now, just a placeholder
+}
 
-// 	}
-// 	return nil
-// }
+func (g *Game) handleChoiceClick(choiceIndex int) {
+	node := g.dialogue.GetCurrentNode()
+	if node.Choices == nil {
+		return
+	}
 
-// func (g *Game) jumpToLastCheckPoint() {
-// 	g.dialogue.CurrentID = g.lastCheckPointID
-// }
+	correct, err := node.Choose(choiceIndex)
+	if err != nil || !correct {
+		ui.ShowDeathScreen(g.ui)
+		return
+	}
 
-// // Draw renders the game screen.
-// func (g *Game) Draw(screen *ebiten.Image) {
-// 	g.view.DrawFullScreenWidget(screen)
-// 	if g.view.IsOnDeathScreen() {
-// 		ui.DrawDeathScreen(screen, g.fonts.Big)
-// 		return
-// 	}
+	g.dialogue.Advance()
+	g.showCurrentNode()
+}
 
-// 	node := g.dialogue.GetCurrentNode()
+func (g *Game) jumpToLastCheckPoint() {
+	g.dialogue.CurrentID = g.lastCheckPointID
+}
 
-// 	g.view.DrawDialogueBox(screen)
-// 	g.view.DrawDialogueText(screen, g.fonts, node.Text)
+func (g *Game) showCurrentNode() {
+	node := g.dialogue.GetCurrentNode()
 
-// 	choicesText := make([]string, 0)
-// 	if node.Choices != nil {
-// 		if node.Unlocked {
-// 			for _, choice := range *node.Choices {
-// 				choicesText = append(choicesText, choice.Text)
-// 			}
-// 		} else {
-// 			choicesText[0] = ui.DontKnowString
-// 		}
-// 	}
-// 	g.view.DrawDialogueChoices(screen, g.fonts.Normal, choicesText)
-// }
+	// build choices text
+	var choicesText []string
+	if node.Choices != nil {
+		if node.Unlocked {
+			for _, choice := range *node.Choices {
+				choicesText = append(choicesText, choice.Text)
+			}
+		} else {
+			choicesText = []string{"Não sei..."}
+		}
+	}
 
-// // Layout defines the logical screen size.
-// func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
-// 	return int(ui.ScreenWidth), int(ui.ScreenHeight)
-// }
+	ui.ShowDialogue(g.ui, node.Text, choicesText)
+}
+
+// SetState changes the game state and manages UI transitions
+func (g *Game) SetState(newState GameState) {
+	g.state = newState
+
+	switch newState {
+	case StateDialogue:
+		// Show dialogue UI, hide point-and-click elements
+		ui.ClearElements(g.ui)
+		g.showCurrentNode()
+
+	case StatePointAndClick:
+		// Hide dialogue, show point-and-click elements
+		ui.HideDialogue(g.ui)
+		// Game can add clickable elements here using ui.AddElement
+
+	case StatePaused:
+		// Pause state management
+	}
+}
+
+// GetState returns the current game state
+func (g *Game) GetState() GameState {
+	return g.state
+}
+
+// Draw renders the game screen.
+func (g *Game) Draw(screen *ebiten.Image) {
+	ui.Draw(g.ui, screen)
+}
+
+// Layout defines the logical screen size.
+func (g *Game) Layout(outsideWidth, outsideHeight int) (int, int) {
+	return int(ui.ScreenWidth), int(ui.ScreenHeight)
+}
